@@ -10,12 +10,6 @@ func WithTimeout(timeout time.Duration) Option {
 	}
 }
 
-func WithRetryInterval(interval time.Duration) Option {
-	return func(c *Config) {
-		c.RetryInterval = interval
-	}
-}
-
 func WithMaxRetryTimes(times int) Option {
 	return func(c *Config) {
 		c.MaxRetryTimes = times
@@ -37,5 +31,18 @@ func WithBeforeHook(hook HookFunc) Option {
 func WithAfterHook(hook HookFunc) Option {
 	return func(c *Config) {
 		c.AfterTry = hook
+	}
+}
+
+func WithStrategy(s int, duration time.Duration) Option {
+	return func(c *Config) {
+		switch s {
+		case StrategyConstant:
+			c.Strategy = Constant(duration)
+		case StrategyLinear:
+			c.Strategy = Linear(duration)
+		case StrategyFibonacci:
+			c.Strategy = Fibonacci(duration)
+		}
 	}
 }

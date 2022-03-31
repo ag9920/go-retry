@@ -11,7 +11,7 @@ import (
 type Config struct {
 	MaxRetryTimes int
 	Timeout       time.Duration
-	RetryInterval time.Duration
+	Strategy      Strategy
 	ThrowPanic    bool
 	BeforeTry     HookFunc
 	AfterTry      HookFunc
@@ -37,7 +37,6 @@ func Do(ctx context.Context, fn RetryFunc, opts ...Option) error {
 	config := &Config{
 		MaxRetryTimes: 3,
 		Timeout:       time.Minute,
-		RetryInterval: 10 * time.Millisecond,
 		BeforeTry:     func() {},
 		AfterTry:      func() {},
 	}
@@ -77,8 +76,9 @@ func Do(ctx context.Context, fn RetryFunc, opts ...Option) error {
 				abort <- struct{}{}
 				return
 			}
-			if config.RetryInterval > 0 {
-				time.Sleep(config.RetryInterval)
+			if config.Strategy != nil {
+				interval := config.Strategy(i + 1)
+				time.Sleep(interval)
 			}
 		}
 		run <- err
