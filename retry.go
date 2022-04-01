@@ -97,11 +97,11 @@ func Do(ctx context.Context, fn RetryFunc, opts ...Option) error {
 		// downstream overload
 		return ErrorOverload
 	case msg := <-panicInfoChan:
-		// panic occured
+		// panic occurred
 		if config.ThrowPanic {
 			panic(msg)
 		}
-		runErr = fmt.Errorf("panic occured=%s", msg)
+		runErr = fmt.Errorf("panic occurred=%s", msg)
 	case e := <-run:
 		// normal run
 		runErr = e
