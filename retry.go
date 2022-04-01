@@ -8,17 +8,9 @@ import (
 	"time"
 )
 
-type Config struct {
-	MaxRetryTimes int
-	Timeout       time.Duration
-	Strategy      Strategy
-	ThrowPanic    bool
-	BeforeTry     HookFunc
-	AfterTry      HookFunc
-}
-
 type RetryFunc func() error
 type HookFunc func()
+type RetryChecker func(err error) (needRetry bool)
 
 func Do(ctx context.Context, fn RetryFunc, opts ...Option) error {
 	if fn == nil {
@@ -33,14 +25,7 @@ func Do(ctx context.Context, fn RetryFunc, opts ...Option) error {
 		timer  *time.Timer
 		runErr error
 	)
-	// default config
-	config := &Config{
-		MaxRetryTimes: 3,
-		Timeout:       time.Minute,
-		BeforeTry:     func() {},
-		AfterTry:      func() {},
-	}
-	// apply option
+	config := newDefaultConfig()
 	for _, o := range opts {
 		o(config)
 	}
@@ -55,7 +40,7 @@ func Do(ctx context.Context, fn RetryFunc, opts ...Option) error {
 			if e := recover(); e == nil {
 				return
 			} else {
-				panicInfoChan <- fmt.Sprintf("retry panic detected, err=%v, stack:\n%s", e, debug.Stack())
+				panicInfoChan <- fmt.Sprintf("retry panic detected, err=%v, stack:%s", e, debug.Stack())
 			}
 		}()
 		for i := 0; i < config.MaxRetryTimes; i++ {
@@ -71,14 +56,17 @@ func Do(ctx context.Context, fn RetryFunc, opts ...Option) error {
 				overload <- struct{}{}
 				return
 			}
-			// fn defined abort
-			if errors.Is(err, ErrorAbort) {
-				abort <- struct{}{}
-				return
+			// check whether to retry
+			if config.RetryChecker != nil {
+				needRetry := config.RetryChecker(err)
+				if !needRetry {
+					abort <- struct{}{}
+					return
+				}
 			}
 			if config.Strategy != nil {
 				interval := config.Strategy(i + 1)
-				time.Sleep(interval)
+				<-time.After(interval)
 			}
 		}
 		run <- err
@@ -98,13 +86,15 @@ func Do(ctx context.Context, fn RetryFunc, opts ...Option) error {
 		return ErrorOverload
 	case msg := <-panicInfoChan:
 		// panic occurred
-		if config.ThrowPanic {
+		if !config.RecoverPanic {
 			panic(msg)
 		}
 		runErr = fmt.Errorf("panic occurred=%s", msg)
 	case e := <-run:
 		// normal run
-		runErr = e
+		if e != nil {
+			runErr = fmt.Errorf("retry failed, err=%w", e)
+		}
 	}
 	return runErr
 }

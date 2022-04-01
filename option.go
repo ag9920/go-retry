@@ -18,7 +18,7 @@ func WithMaxRetryTimes(times int) Option {
 
 func WithThrowPanic(throwPanic bool) Option {
 	return func(c *Config) {
-		c.ThrowPanic = throwPanic
+		c.RecoverPanic = throwPanic
 	}
 }
 
@@ -31,6 +31,12 @@ func WithBeforeHook(hook HookFunc) Option {
 func WithAfterHook(hook HookFunc) Option {
 	return func(c *Config) {
 		c.AfterTry = hook
+	}
+}
+
+func WithRetryChecker(checker RetryChecker) Option {
+	return func(c *Config) {
+		c.RetryChecker = checker
 	}
 }
 

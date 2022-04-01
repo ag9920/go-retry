@@ -1,6 +1,6 @@
 # go-retry
 
-A Simple Golang Library For Retry Mechanism.
+A Stateless Golang Library For Retry Mechanism.
 
 `go get github.com/ag9920/go-retry`
 
