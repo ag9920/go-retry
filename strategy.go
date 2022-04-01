@@ -17,8 +17,8 @@ func Constant(d time.Duration) Strategy {
 }
 
 func Linear(d time.Duration) Strategy {
-	return func(attempt int) time.Duration {
-		return (d * time.Duration(attempt))
+	return func(times int) time.Duration {
+		return (d * time.Duration(times))
 	}
 }
 

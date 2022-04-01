@@ -2,15 +2,22 @@
 
 A Stateless Golang Library For Retry Mechanism.
 
-`go get github.com/ag9920/go-retry`
+You can easily integrate go-retry into your project. All features tested.
+
+Check the default retry config in `config.go`. And feel free to customize config with options.
 
 ## Feature Supported
 - Max retry times
 - Abort execution
-- Total timeout
-- Retry interval after failed call
+- Timeout
+- Backoff strategy
 - Choose whether to throw panic
 - Hooks
+
+## Getting Started
+
+`go get github.com/ag9920/go-retry`
+
 
 ## Usage
 
@@ -30,8 +37,7 @@ func main() {
 	goretry.Do(ctx, randFn,
 		goretry.WithMaxRetryTimes(10),
 		goretry.WithBeforeHook(printTime),
-		goretry.WithRetryInterval(time.Second),
-		goretry.WithThrowPanic(true))
+		goretry.WithRecoverPanic(true))
 }
 
 func randFn() error {
@@ -50,3 +56,8 @@ func printTime() {
 }
 
 ```
+
+
+## Contribution
+
+If you want to contribute resources to go-retry, Pull Requests are welcomed!
