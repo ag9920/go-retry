@@ -38,7 +38,7 @@ func GetData() error   // call rpc to query data from downstream
 
 A basic retry with default max retry times and timeout. Check the default retry config in `config.go`. 
 
-```
+```go
 import (
     goretry "github.com/ag9920/go-retry"
 )
@@ -62,7 +62,7 @@ goretry will keep executing `GetData` until the returned err of `GetData()` beco
 
 Sometimes we want to abort the execution if a certain error is detected. For example, the downstream was already completed unable to serve your request regardless of how many retries was conducted. We want to identify such conditions and abort retry. You could simply define a `RetryChecker` to meet the requirement.
 
-```
+```go
 var OverloadError = errors.New("already overload, should abort retry")
 
 func isDownstreamOverload(err error) bool {
@@ -78,7 +78,7 @@ goretry will call `isDownstreamOverload` after each failed call to `GetData()` a
 
 **Example 3: Change MaxRetryTimes && Timeout**
 
-```
+```go
 err := goretry.Do(ctx, GetData(), goretry.WithMaxRetryTimes(10), goretry.WithTimeout(5 * time.Second))
 
 ```
@@ -86,7 +86,7 @@ err := goretry.Do(ctx, GetData(), goretry.WithMaxRetryTimes(10), goretry.WithTim
 
 **Example 4: Add hooks before/after each retry**
 
-```
+```go
 func printTimestamp() {
     fmt.Println(time.Now().Unix())
 }
@@ -103,7 +103,7 @@ By default, goretry will keep retry instantly after the last failed call. This m
 
 Currently, available strategies are the following
 
-```
+```go
 
 type BackoffStrategy int
 
@@ -116,14 +116,14 @@ const (
 
 Add your strategy to Options. 
 
-```
+```go
 baseDuration := 10*time.Millisecond
 err := goretry.Do(ctx, GetData(), goretry.WithBackOffStrategy(StrategyFibonacci, baseDuration))
 ```
 
 If all provided strategies can't satisfy your needs, you could also specify your own implementation and use `WithCustomBackOffStrategy`
 
-```
+```go
 
 err := goretry.Do(ctx, GetData(), goretry.WithCustomBackOffStrategy(
     func(times int) time.Duration {
@@ -140,7 +140,7 @@ err := goretry.Do(ctx, GetData(), goretry.WithCustomBackOffStrategy(
 
 Check the `example` foler to see a mock business demo.
 
-```
+```go
 
 import (
 	"context"
