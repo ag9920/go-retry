@@ -52,3 +52,9 @@ func WithStrategy(s int, duration time.Duration) Option {
 		}
 	}
 }
+
+func WithCustomStrategy(s Strategy) Option {
+	return func(c *Config) {
+		c.Strategy = s
+	}
+}

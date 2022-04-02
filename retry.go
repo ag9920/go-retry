@@ -2,7 +2,6 @@ package goretry
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"runtime/debug"
 	"time"
@@ -18,7 +17,6 @@ func Do(ctx context.Context, fn RetryFunc, opts ...Option) error {
 	}
 	var (
 		abort         = make(chan struct{}, 1) // caller choose to abort retry
-		overload      = make(chan struct{}, 1) // downstream return overload signal
 		run           = make(chan error, 1)
 		panicInfoChan = make(chan string, 1)
 
@@ -51,11 +49,6 @@ func Do(ctx context.Context, fn RetryFunc, opts ...Option) error {
 				run <- nil
 				return
 			}
-			// stop retry when overload
-			if errors.Is(err, ErrorOverload) {
-				overload <- struct{}{}
-				return
-			}
 			// check whether to retry
 			if config.RetryChecker != nil {
 				needRetry := config.RetryChecker(err)
@@ -81,9 +74,6 @@ func Do(ctx context.Context, fn RetryFunc, opts ...Option) error {
 	case <-abort:
 		// caller abort
 		return ErrorAbort
-	case <-overload:
-		// downstream overload
-		return ErrorOverload
 	case msg := <-panicInfoChan:
 		// panic occurred
 		if !config.RecoverPanic {
