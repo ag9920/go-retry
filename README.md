@@ -80,7 +80,7 @@ goretry will call `isDownstreamOverload` after each failed call to `GetData()` a
 
 ```
 err := goretry.Do(ctx, GetData(), goretry.WithMaxRetryTimes(10), goretry.WithTimeout(5 * time.Second))
-}
+
 ```
 
 
