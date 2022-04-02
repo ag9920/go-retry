@@ -138,7 +138,7 @@ err := goretry.Do(ctx, GetData(), goretry.WithCustomBackOffStrategy(
 
 ## Demo
 
-Check the `example` foler to see a mock business demo.
+Check the `example` folder to see a mock business demo.
 
 ```go
 
