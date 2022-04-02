@@ -49,3 +49,29 @@ func Test_SimpleRetryWithAbortErr(t *testing.T) {
 		t.Errorf("retry times not expected")
 	}
 }
+
+func Test_SimpleRetryWithRecoverPanic(t *testing.T) {
+	ctx := context.Background()
+	defer func() {
+		info := recover()
+		if info != nil {
+			t.Error("recover panic failed")
+		}
+	}()
+	definedErr := errors.New("err from outputErr")
+	var retryTimes int
+	err := goretry.Do(ctx, func() error {
+		retryTimes++
+		if retryTimes == 2 {
+			panic("retry panic")
+		}
+		return definedErr
+	}, goretry.WithRecoverPanic())
+
+	if err == nil {
+		t.Errorf("should return err")
+	}
+	if retryTimes != 2 {
+		t.Errorf("retry times not expected")
+	}
+}

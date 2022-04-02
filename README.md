@@ -104,9 +104,12 @@ By default, goretry will keep retry instantly after the last failed call. This m
 Currently, available strategies are the following
 
 ```
+
+type BackoffStrategy int
+
 const (
-	StrategyConstant = iota
-	StrategyLinear   
+	StrategyConstant BackoffStrategy = iota
+	StrategyLinear
 	StrategyFibonacci
 )
 ```
@@ -115,14 +118,14 @@ Add your strategy to Options.
 
 ```
 baseDuration := 10*time.Millisecond
-err := goretry.Do(ctx, GetData(), goretry.WithStrategy(StrategyFibonacci, baseDuration))
+err := goretry.Do(ctx, GetData(), goretry.WithBackOffStrategy(StrategyFibonacci, baseDuration))
 ```
 
-If all provided strategies can't satisfy your needs, you could also specify your own implementation and use `WithCustomStrategy`
+If all provided strategies can't satisfy your needs, you could also specify your own implementation and use `WithCustomBackOffStrategy`
 
 ```
 
-err := goretry.Do(ctx, GetData(), goretry.WithCustomStrategy(
+err := goretry.Do(ctx, GetData(), goretry.WithCustomBackOffStrategy(
     func(times int) time.Duration {
 		if times > 1 {
             return 50*time.Millisecond
@@ -132,6 +135,65 @@ err := goretry.Do(ctx, GetData(), goretry.WithCustomStrategy(
 ))
 
 ```
+
+## Demo
+
+Check the `example` foler to see a mock business demo.
+
+```
+
+import (
+	"context"
+	"log"
+	"time"
+
+	goretry "github.com/ag9920/go-retry"
+)
+
+type Item struct {
+	ID    string
+	Name  string
+	Price string
+}
+
+type ItemRepo interface {
+	Query(id string) (Item, error)
+}
+
+type ItemService struct {
+	repo ItemRepo
+}
+
+func (srv ItemService) GetItem(ctx context.Context, id string) (*Item, error) {
+	var err error
+	var item *Item
+	// wrapper function
+	retryFn := func() error {
+		// send request to downstream to get data
+		result, err := srv.repo.Query(id)
+		if err == nil {
+			item = &result
+			return nil
+		}
+		if err.Error() == "overload" {
+			return goretry.ErrorAbort // use prefined abort err to stop execution
+		}
+		return err
+	}
+	err = goretry.Do(ctx, retryFn,
+		goretry.WithMaxRetryTimes(3),
+		goretry.WithTimeout(500*time.Microsecond),
+		goretry.WithBackOffStrategy(goretry.StrategyFibonacci, 10*time.Microsecond),
+		goretry.WithRecoverPanic())
+
+	if err != nil {
+		log.Default().Printf("retry failed, id=%s, err=%v", id, err)
+		return nil, err
+	}
+	return item, nil
+}
+```
+
 
 ## Contribution
 

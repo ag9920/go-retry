@@ -2,8 +2,10 @@ package goretry
 
 import "time"
 
+type BackoffStrategy int
+
 const (
-	StrategyConstant = iota
+	StrategyConstant BackoffStrategy = iota
 	StrategyLinear
 	StrategyFibonacci
 )

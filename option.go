@@ -16,9 +16,9 @@ func WithMaxRetryTimes(times int) Option {
 	}
 }
 
-func WithThrowPanic(throwPanic bool) Option {
+func WithRecoverPanic() Option {
 	return func(c *Config) {
-		c.RecoverPanic = throwPanic
+		c.RecoverPanic = true
 	}
 }
 
@@ -40,7 +40,7 @@ func WithRetryChecker(checker RetryChecker) Option {
 	}
 }
 
-func WithStrategy(s int, duration time.Duration) Option {
+func WithBackOffStrategy(s BackoffStrategy, duration time.Duration) Option {
 	return func(c *Config) {
 		switch s {
 		case StrategyConstant:
@@ -53,7 +53,7 @@ func WithStrategy(s int, duration time.Duration) Option {
 	}
 }
 
-func WithCustomStrategy(s Strategy) Option {
+func WithCustomBackOffStrategy(s Strategy) Option {
 	return func(c *Config) {
 		c.Strategy = s
 	}
